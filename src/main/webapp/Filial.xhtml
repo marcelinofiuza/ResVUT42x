@@ -1,0 +1,256 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:f="http://xmlns.jcp.org/jsf/core"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	template="/WEB-INF/templates/Layout.xhtml">
+
+	<ui:define name="content">
+		 <section class="tmg-pagina">
+
+			<!-- execução inicial -->
+			<f:metadata>
+				<f:viewAction action="#{controleFilial.listar}"></f:viewAction>
+			</f:metadata>
+					
+			<h:form id="frm">
+				<!-- Mensagem Form -->
+				<p:messages id="msg-frm" closable="true"/>
+				
+				<!-- Barra de Ferramentas -->			
+				<p:toolbar style="margin-bottom:10px" id="toolbar">
+					<f:facet name="left">
+						<p:commandButton 	id="bto-novo" 
+											title="Novo" 
+											icon="fa fa-file-o"						
+											action="#{controleFilial.novoCadastro}"
+											process="@this"	
+											update="dialogo"					
+											oncomplete="PF('wgDados').show()">
+											<p:resetInput target="dialogo"/>
+						</p:commandButton>					
+						<p:commandButton 	id="bto-editar" 
+											title="Editar" 
+											icon="fa fa-pencil"
+											process="@this"	
+											update="dialogo"			
+											oncomplete="PF('wgDados').show()"								
+											disabled="#{controleFilial.filialSelect == null}">
+											<p:resetInput target="dialogo"/>
+											<f:setPropertyActionListener value="#{controleFilial.filialSelect}" target="#{controleFilial.filialEdicao}"/>
+						</p:commandButton>										
+						<p:commandButton 	id="bto-excluir" 
+											title="Excluir" 
+											icon="fa fa-trash"   										
+											process="@this"	
+											update="tabela msg-frm toolbar"	
+											disabled="#{controleFilial.filialSelect == null}"
+											actionListener="#{controleFilial.excluir}">
+											<p:confirm icon="fa fa-warning"  header="Exclusão de Registro" message="Confirma a exclusão da Filial?"/>
+						</p:commandButton>															
+				        <span class="ui-separator">
+				        	<span class="fa fa-fw fa-ellipsis-v"/>
+				        </span>
+				        <p:commandButton 	id="bto-exportar" 
+				        					title="Exportar" 
+				        					icon="fa fa-download"
+				        					ajax="false"
+				        					immediate="true">
+				        					<p:dataExporter type="xls" target="tabela" fileName="filial"/>
+				        </p:commandButton>
+					</f:facet>
+					<f:facet name="right">
+						<p style="margin-top:5px; margin-bottom:5px">Cdastro de Filiais</p>			
+					</f:facet>
+				</p:toolbar>
+	
+				<!-- Listagem dos dados -->
+				<p:dataTable value="#{controleFilial.listaFiliais}" var="filial"
+					id="tabela"
+					reflow="true"
+					rows="15" paginator="true" paginatorPosition="top"
+					selection="#{controleFilial.filialSelect}"
+					selectionMode="single" rowKey="#{filial.idFilial}"
+					emptyMessage="Nenhuma Filial Cadastrada">
+					
+					<!-- Evento ajax, que atuliza a barra de ferramentas, quando marca/desmarca uma linha -->
+					<p:ajax event="rowSelect" update=":frm:toolbar"/>
+					<p:ajax event="rowUnselect" update=":frm:toolbar"/>
+					
+					<!-- Colunas -->
+					<p:column headerText="Código" width="70" sortBy="#{filial.idFilial}">
+						<h:outputText value="#{filial.idFilial}" />
+					</p:column>
+					<p:column headerText="Razõa Social" sortBy="#{filial.razaoSocial}">
+						<h:outputText value="#{filial.razaoSocial}" />
+					</p:column>
+					<p:column headerText="Fantasia" width="250">
+						<h:outputText value="#{filial.fantasia}" />
+					</p:column>
+					<p:column headerText="CNPJ" width="150">
+						<h:outputText value="#{filial.cnpj}" />
+					</p:column>
+					<p:column headerText="CPF" width="150">
+						<h:outputText value="#{filial.cpf}" />
+					</p:column>					
+				</p:dataTable>
+				
+				<!-- Dialogo inclusão/alteração -->
+				<p:dialog header="Dados Filial" 
+						  widgetVar="wgDados" 
+						  id="dialogo"
+						  resizable="false" 
+						  modal="true"
+						  width="800"
+						  height="450">
+						  
+					<!-- Mensagem dialogo -->	  
+					<p:messages autoUpdate="true" id="msg-dialogo" closable="true"/>
+						
+					<!-- Barra de Ferramentas dialogo-->					
+					<p:defaultCommand target="bto-salvar" scope="dialogo"/>  
+					<p:toolbar>		
+						<f:facet name="left">	
+							<p:commandButton id="bto-salvar"
+											 title="Salvar"
+											 icon="fa fa-save"										  
+											 action="#{controleFilial.salvar}"
+											 process="dialogo" 
+											 update="msg-dialogo tabview-dados"
+											 oncomplete="if(!args.validationFailed) PF('wgDados').hide()"/>
+						</f:facet>
+					</p:toolbar>
+									
+					<p:tabView id="tabview-dados">
+						<!-- Aba Empresa -->
+						<p:tab title="Empresa">
+							<h:panelGrid columns="2">
+							
+								<p:outputLabel value="Razão Social" for="razao-social"/>
+								<p:inputText id="razao-social" size="60" maxlength="80"
+								value="#{controleFilial.filialEdicao.razaoSocial}"/>
+								
+								<p:outputLabel value="Fantasia" for="fantasia"/>
+								<p:inputText id="fantasia" size="60" maxlength="40"
+								value="#{controleFilial.filialEdicao.fantasia}"/>
+								
+								<p:outputLabel value="CNPJ" for="cnpj"/>
+								<p:inputMask id="cnpj" size="18" maxlength="18"
+								value="#{controleFilial.filialEdicao.cnpj}"
+								mask="99.999.999/9999-99"/>
+								
+								<p:outputLabel value="CPF" for="cpf"/>
+								<p:inputMask id="cpf" size="14" maxlength="14"
+								value="#{controleFilial.filialEdicao.cpf}"
+								mask="999.999.999-99"/>
+								
+								<p:outputLabel value="Inscrição Estadual" for="ins-estadual"/>
+								<p:inputText id="ins-estadual" size="15" maxlength="15"
+								value="#{controleFilial.filialEdicao.insEstadual}"/>
+								
+								<p:outputLabel value="Inscrição Municipal" for="ins-municipal"/>
+								<p:inputText id="ins-municipal" size="15" maxlength="15"
+								value="#{controleFilial.filialEdicao.insMunicipal}"/>
+								
+								<p:outputLabel value="Data Abertura" for="data-abertura"/>
+								<p:calendar id="data-abertura" size="10"
+								locale="pt_BR"
+								value="#{controleFilial.filialEdicao.dataAbertura}"
+								pattern="dd/MM/yyyy" mask="99/99/9999"
+								showOn="button"/>
+													
+								<p:outputLabel value="Ramo de Atividade" for="ramo-atividade"/>
+								<p:selectOneMenu id="ramo-atividade" value="#{controleFilial.filialEdicao.ramoAtividade}">
+									<f:selectItem  itemLabel="Selecione"/>
+									<f:selectItems value="#{controleFilial.ramosAtividade}" var="ramoAtividade" 
+												   itemLabel="#{ramoAtividade.descricao}" itemValue="#{ramoAtividade}"/>					
+								</p:selectOneMenu>
+								
+								<p:outputLabel value="CNAE" for="cnae"/>
+								<p:inputMask id="cnae" size="9" maxlength="9"
+								value="#{controleFilial.filialEdicao.cnae}"
+								mask="9999-9/99"/>
+			
+								<p:outputLabel value="Natureza Juridica" for="natureza-juridica"/>
+								<p:inputMask id="natureza-juridica" size="5" maxlength="5"
+								value="#{controleFilial.filialEdicao.naturezaJuridica}"
+								mask="999-9"/>
+								
+							</h:panelGrid>	
+						</p:tab>					
+						<!-- Aba Endereço -->
+						<p:tab title="Endereço">	
+							<h:panelGrid columns="2">						
+								
+								<p:outputLabel value="CEP" for="cep"/>
+								<p:inputMask id="cep" size="10" maxlength="9"
+								value="#{controleFilial.filialEdicao.endereco.cep}"
+								mask="99999-999"/>	
+								
+								<p:outputLabel value="Tipo Logradouro" for="tipo-logradouro"/>
+								<p:inputText id="tipo-logradouro" size="15" maxlength="15"
+								value="#{controleFilial.filialEdicao.endereco.tipoLogradouro}"/>							
+	
+								<p:outputLabel value="Logradouro" for="logradouro"/>
+								<p:inputText id="logradouro" size="50" maxlength="50"
+								value="#{controleFilial.filialEdicao.endereco.logradouro}"/>
+	
+								<p:outputLabel value="Número" for="numero"/>
+								<p:inputText id="numero" size="10" maxlength="10"
+								value="#{controleFilial.filialEdicao.endereco.numero}"/>
+	
+								<p:outputLabel value="Complemento" for="complemento"/>
+								<p:inputText id="complemento" size="20" maxlength="20"
+								value="#{controleFilial.filialEdicao.endereco.complemento}"/>
+	
+								<p:outputLabel value="Bairro" for="bairro"/>
+								<p:inputText id="bairro" size="40" maxlength="40"
+								value="#{controleFilial.filialEdicao.endereco.bairro}"/>
+	
+								<p:outputLabel value="Cidade" for="cidade"/>
+								<p:inputText id="cidade" size="40" maxlength="40"
+								value="#{controleFilial.filialEdicao.endereco.cidade}"/>
+	
+								<p:outputLabel value="UF" for="uf"/>
+								<p:inputText id="uf" size="3" maxlength="2"
+								value="#{controleFilial.filialEdicao.endereco.uf}"/>
+																																																		
+							</h:panelGrid>								
+						</p:tab>
+						<!-- Aba Contato -->
+						<p:tab title="Contato">
+							<h:panelGrid columns="2">
+								
+								<p:outputLabel value="Nome" for="nome"/>
+								<p:inputText id="nome" size="50" maxlength="50"
+								value="#{controleFilial.filialEdicao.contato.nomeContato}"/>
+	
+								<p:outputLabel value="E-mail" for="email"/>
+								<p:inputText id="email" size="50" maxlength="100"
+								value="#{controleFilial.filialEdicao.contato.email}"/>
+	
+								<p:outputLabel value="Telefone" for="telefone"/>
+								<p:inputMask id="telefone" size="15" maxlength="15"
+								value="#{controleFilial.filialEdicao.contato.telefone}"
+								mask="(99)-9999-9999"/>
+	
+								<p:outputLabel value="Ramal" for="ramal"/>
+								<p:inputText id="ramal" size="5" maxlength="5"
+								value="#{controleFilial.filialEdicao.contato.ramal}"/>
+	
+								<p:outputLabel value="Celular" for="celular"/>
+								<p:inputMask id="celular" size="15" maxlength="15"
+								value="#{controleFilial.filialEdicao.contato.celular}"
+								mask="(99)-99999-9999"/>
+																																										
+							</h:panelGrid>
+						</p:tab>					
+					</p:tabView>
+										
+				</p:dialog>			
+				
+			</h:form>
+		</section>
+	</ui:define>
+
+</ui:composition>
